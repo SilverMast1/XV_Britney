@@ -49,8 +49,8 @@
         body {
             font-family: 'Montserrat', sans-serif;
             color: var(--azul-profundo);
-            background-color: #f4f9fc;
-            background-image: radial-gradient(rgba(77, 208, 225, 0.15) 1px, transparent 1px);
+            background-color: #e0f7fa;
+            background-image: radial-gradient(rgba(77, 208, 225, 0.25) 1px, transparent 1px);
             background-size: 24px 24px;
             overflow-x: hidden;
             scroll-behavior: smooth;
@@ -63,7 +63,7 @@
             left: 0;
             width: 100%;
             height: 100%;
-            z-index: 0;
+            z-index: 1;
             pointer-events: none;
         }
 
@@ -76,15 +76,15 @@
             text-align: center;
         }
 
-        /* --- Hero Section Parallax --- */
+        /* --- Hero Section --- */
         .hero {
-            height: 100vh;
+            min-height: 100vh;
             display: flex;
             align-items: center;
             justify-content: center;
             position: relative;
             overflow: hidden;
-            background: #003d4d;
+            background: var(--azul-profundo);
         }
 
         .hero-bg {
@@ -93,41 +93,63 @@
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(rgba(10, 25, 47, 0.3), rgba(10, 25, 47, 0.75)), url('fotos/portada.jpg') center/cover;
-            transform: scale(1.05);
-            transition: transform 0.5s ease-out;
+            background-image: url('fotos/portada.jpg');
+            background-size: cover;
+            background-repeat: no-repeat;
+            background-position: center center;
+            opacity: 0.45;
+            transition: background-position 0.1s ease-out;
+        }
+
+        /* Tono azul traslúcido encima */
+        .hero-bg::before {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(
+                160deg,
+                rgba(0, 151, 167, 0.2) 0%,
+                rgba(10, 25, 47, 0.1) 50%,
+                rgba(0, 96, 100, 0.25) 100%
+            );
+        }
+
+        /* Gradiente inferior para legibilidad del texto */
+        .hero-bg::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            height: 55%;
+            background: linear-gradient(to top, rgba(10, 25, 47, 0.9) 0%, rgba(10, 25, 47, 0.4) 60%, transparent 100%);
         }
 
         .hero-content {
             z-index: 2;
             text-align: center;
             color: white;
-            backdrop-filter: blur(8px);
-            -webkit-backdrop-filter: blur(8px);
             padding: 50px 40px;
-            border: 1px solid rgba(255, 255, 255, 0.25);
-            border-radius: 24px;
-            background: rgba(10, 25, 47, 0.45);
-            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3), inset 0 0 20px rgba(255, 255, 255, 0.05);
             max-width: 90%;
+            width: 100%;
         }
 
         .hero h1 {
             font-family: 'Dancing Script', cursive;
             font-size: 6rem;
-            margin-bottom: 15px;
+            margin-bottom: 10px;
             color: #ffffff;
-            text-shadow: 0 0 15px rgba(77, 208, 225, 0.6), 0 0 30px rgba(77, 208, 225, 0.3);
+            text-shadow: 0 0 20px rgba(77, 208, 225, 0.9), 0 0 45px rgba(77, 208, 225, 0.5), 0 2px 8px rgba(0,0,0,0.6);
             letter-spacing: 2px;
         }
 
         .hero p {
             font-family: 'Playfair Display', serif;
-            font-size: 1.5rem;
+            font-size: 1.4rem;
             letter-spacing: 8px;
             text-transform: uppercase;
-            color: var(--plata-claro);
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+            color: #e0f7fa;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
         }
 
         .scroll-down {
@@ -383,18 +405,21 @@
 
         /* --- Galería Slider Premium --- */
         .slider-wrapper {
-            max-width: 950px;
-            margin: 50px auto;
+            max-width: 520px;
+            margin: 30px auto;
             position: relative;
+            padding: 0 10px;
         }
 
         .slider {
-            height: 600px;
-            border-radius: 28px;
+            width: 100%;
+            aspect-ratio: 3 / 4;
+            border-radius: 22px;
             overflow: hidden;
             position: relative;
-            border: 12px solid white;
-            box-shadow: 0 25px 50px rgba(0, 96, 100, 0.15);
+            border: 8px solid white;
+            box-shadow: 0 20px 50px rgba(0, 96, 100, 0.18);
+            background: #0a192f;
         }
 
         .slide {
@@ -402,19 +427,19 @@
             width: 100%;
             height: 100%;
             opacity: 0;
-            transition: opacity 1.2s ease-in-out, transform 1.2s ease-in-out;
-            transform: scale(1.05);
+            transition: opacity 1s ease-in-out;
         }
 
         .slide.active {
             opacity: 1;
-            transform: scale(1);
         }
 
         .slide img {
             width: 100%;
             height: 100%;
             object-fit: cover;
+            object-position: center top;
+            display: block;
         }
 
         /* Controles de Slider */
@@ -422,17 +447,17 @@
             position: absolute;
             top: 50%;
             transform: translateY(-50%);
-            background: rgba(255, 255, 255, 0.85);
+            background: rgba(255, 255, 255, 0.9);
             border: none;
-            width: 50px;
-            height: 50px;
+            width: 44px;
+            height: 44px;
             border-radius: 50%;
             cursor: pointer;
             z-index: 10;
             display: flex;
             align-items: center;
             justify-content: center;
-            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
             transition: all 0.3s;
             color: var(--azul-marino);
         }
@@ -443,23 +468,23 @@
         }
 
         .slider-btn-prev {
-            left: -25px;
+            left: -22px;
         }
 
         .slider-btn-next {
-            right: -25px;
+            right: -22px;
         }
 
         .slider-dots {
             display: flex;
             justify-content: center;
-            gap: 10px;
-            margin-top: 20px;
+            gap: 8px;
+            margin-top: 16px;
         }
 
         .dot {
-            width: 10px;
-            height: 10px;
+            width: 9px;
+            height: 9px;
             border-radius: 50%;
             background: var(--plata-medio);
             cursor: pointer;
@@ -468,7 +493,7 @@
 
         .dot.active {
             background: var(--azul-marino);
-            width: 28px;
+            width: 26px;
             border-radius: 5px;
         }
 
@@ -998,7 +1023,7 @@
             }
 
             .hero p {
-                font-size: 1.1rem;
+                font-size: 1rem;
                 letter-spacing: 5px;
             }
 
@@ -1008,20 +1033,22 @@
             }
 
             .slider {
-                height: 420px;
+                aspect-ratio: 3 / 4;
+                max-height: 520px;
+                height: auto;
             }
 
             .slider-btn {
-                width: 40px;
-                height: 40px;
+                width: 36px;
+                height: 36px;
             }
 
             .slider-btn-prev {
-                left: -10px;
+                left: -12px;
             }
 
             .slider-btn-next {
-                right: -10px;
+                right: -12px;
             }
 
             .persona-card {
@@ -1110,128 +1137,11 @@
     <!-- Contador -->
     <section id="countdown-section" class="section" data-aos="fade-up">
         <h2>Falta muy poco...</h2>
-        <p class="section-subtitle">Acompáñanos a contar las horas para este gran día</p>
         <div class="count-container">
             <div class="time-box"><span id="days">00</span>Días</div>
             <div class="time-box"><span id="hours">00</span>Horas</div>
             <div class="time-box"><span id="mins">00</span>Minutos</div>
             <div class="time-box"><span id="secs">00</span>Segundos</div>
-        </div>
-    </section>
-
-    <!-- Galería -->
-    <section class="section">
-        <h2>Momentos Especiales</h2>
-        <p class="section-subtitle">Un vistazo a mi historia</p>
-        <div class="slider-wrapper">
-            <button class="slider-btn slider-btn-prev" onclick="prevSlide()" aria-label="Anterior">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="15 18 9 12 15 6"></polyline>
-                </svg>
-            </button>
-            <button class="slider-btn slider-btn-next" onclick="nextSlide()" aria-label="Siguiente">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
-                    stroke-linecap="round" stroke-linejoin="round">
-                    <polyline points="9 18 15 12 9 6"></polyline>
-                </svg>
-            </button>
-            <div class="slider" data-aos="fade-up">
-                <div class="slide active"><img src="fotos/foto1.jpg" alt="Foto Britney 1"></div>
-                <div class="slide"><img src="fotos/foto2.jpg" alt="Foto Britney 2"></div>
-                <div class="slide"><img src="fotos/foto3.jpg" alt="Foto Britney 3"></div>
-            </div>
-            <div class="slider-dots">
-                <span class="dot active" onclick="setSlide(0)"></span>
-                <span class="dot" onclick="setSlide(1)"></span>
-                <span class="dot" onclick="setSlide(2)"></span>
-            </div>
-        </div>
-    </section>
-
-    <!-- Itinerario -->
-    <section class="section">
-        <h2 data-aos="fade-up">Itinerario de Gala</h2>
-        <p class="section-subtitle" data-aos="fade-up">No te pierdas ningún momento especial</p>
-        <div class="timeline">
-            <!-- Evento 1 -->
-            <div class="event" data-aos="fade-left">
-                <div class="event-icon-container">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M12 2L2 22h20L12 2zm0 3l7.5 15h-15L12 5zm-1 5h2v3h3v2h-3v3h-2v-3H8v-2h3v-3z" />
-                    </svg>
-                </div>
-                <div class="event-content">
-                    <h3>17:00 HRS - Ceremonia Religiosa</h3>
-                    <p style="font-weight: 600; color: var(--azul-marino); margin-bottom: 5px;">Parroquia de San Juan
-                        Bautista</p>
-                    <p>Acompáñanos a dar gracias y celebrar esta hermosa bendición.</p>
-                    <div class="gps-container">
-                        <a href="https://www.google.com/maps/search/?api=1&query=Parroquia+de+San+Juan+Bautista"
-                            target="_blank" class="btn-gps btn-gmaps">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                            </svg>
-                            Google Maps
-                        </a>
-                        <a href="https://waze.com/ul?q=Parroquia+de+San+Juan+Bautista&navigate=yes" target="_blank"
-                            class="btn-gps btn-waze">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M21.5 10.7c-.5-1.1-1.3-2.1-2.4-2.8-1.1-.7-2.4-1-3.7-1-1.2 0-2.3.3-3.3.9-1-.6-2.1-.9-3.3-.9-1.3 0-2.6.3-3.7 1-1.1.7-1.9 1.7-2.4 2.8C2.2 11.9 2 13.1 2 14.3c0 .8.1 1.7.4 2.5.4 1 1 1.8 1.8 2.5.8.7 1.7 1.1 2.8 1.3 1 .2 2 .2 3 0 1-.2 1.9-.7 2.7-1.3.8.6 1.7 1.1 2.7 1.3 1 .2 2 .2 3 0 1.1-.2 2-.6 2.8-1.3.8-.7 1.4-1.5 1.8-2.5.3-.8.4-1.7.4-2.5 0-1.2-.2-2.4-.7-3.6z" />
-                            </svg>
-                            Waze
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Evento 2 -->
-            <div class="event" data-aos="fade-left" data-aos-delay="200">
-                <div class="event-icon-container">
-                    <svg viewBox="0 0 24 24">
-                        <path d="M21 2H3v2l8 9v5H6v2h12v-2h-5v-5l8-9V2zM7.44 4h9.12L12 9.13 7.44 4z" />
-                    </svg>
-                </div>
-                <div class="event-content">
-                    <h3>19:30 HRS - Recepción de Gala</h3>
-                    <p style="font-weight: 600; color: var(--azul-marino); margin-bottom: 5px;">Salón Blue Diamond</p>
-                    <p>Cóctel de bienvenida, alfombra plateada y sesión fotográfica para los invitados.</p>
-                    <div class="gps-container">
-                        <a href="https://www.google.com/maps/search/?api=1&query=Salon+Blue+Diamond" target="_blank"
-                            class="btn-gps btn-gmaps">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
-                            </svg>
-                            Google Maps
-                        </a>
-                        <a href="https://waze.com/ul?q=Salon+Blue+Diamond&navigate=yes" target="_blank"
-                            class="btn-gps btn-waze">
-                            <svg viewBox="0 0 24 24">
-                                <path
-                                    d="M21.5 10.7c-.5-1.1-1.3-2.1-2.4-2.8-1.1-.7-2.4-1-3.7-1-1.2 0-2.3.3-3.3.9-1-.6-2.1-.9-3.3-.9-1.3 0-2.6.3-3.7 1-1.1.7-1.9 1.7-2.4 2.8C2.2 11.9 2 13.1 2 14.3c0 .8.1 1.7.4 2.5.4 1 1 1.8 1.8 2.5.8.7 1.7 1.1 2.8 1.3 1 .2 2 .2 3 0 1-.2 1.9-.7 2.7-1.3.8.6 1.7 1.1 2.7 1.3 1 .2 2 .2 3 0 1.1-.2 2-.6 2.8-1.3.8-.7 1.4-1.5 1.8-2.5.3-.8.4-1.7.4-2.5 0-1.2-.2-2.4-.7-3.6z" />
-                            </svg>
-                            Waze
-                        </a>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Evento 3 -->
-            <div class="event" data-aos="fade-left" data-aos-delay="400">
-                <div class="event-icon-container">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M2 19h20v2H2v-2zm12-4c0-2.56-1.54-4.75-3.75-5.69v-.81h1.5v-2h-1.5V5h-1.5v1.5h-1.5v2h1.5v.81C6.04 10.25 4.5 12.44 4.5 15h9.5zm-5-3.5c1.38 0 2.5 1.12 2.5 2.5H6.5c0-1.38 1.12-2.5 2.5-2.5zm10.5-.5h-2v3h-3v2h3v3h2v-3h3v-2h-3v-3z" />
-                    </svg>
-                </div>
-                <div class="event-content">
-                    <h3>21:00 HRS - Cena y Baile</h3>
-                    <p>Banquete principal seguido por la gran apertura de la pista de baile y sorpresas.</p>
-                </div>
-            </div>
         </div>
     </section>
 
@@ -1248,12 +1158,12 @@
                 <div class="persona-card">
                     <div class="persona-icono">♡</div>
                     <p class="persona-rol">Padre</p>
-                    <p class="persona-nombre">Nombre del Padre</p>
+                    <p class="persona-nombre">Miguel Angel Ramirez Coronado</p>
                 </div>
                 <div class="persona-card">
                     <div class="persona-icono">♡</div>
                     <p class="persona-rol">Madre</p>
-                    <p class="persona-nombre">Nombre de la Madre</p>
+                    <p class="persona-nombre">Xiphatly Guerrero Rodríguez</p>
                 </div>
             </div>
         </div>
@@ -1265,72 +1175,155 @@
                 <div class="persona-card">
                     <div class="persona-icono">✦</div>
                     <p class="persona-rol">Padrino</p>
-                    <p class="persona-nombre">Nombre del Padrino</p>
+                    <p class="persona-nombre">Jose Luis Guillen Coronado</p>
                 </div>
                 <div class="persona-card">
                     <div class="persona-icono">✦</div>
                     <p class="persona-rol">Madrina</p>
-                    <p class="persona-nombre">Nombre de la Madrina</p>
+                    <p class="persona-nombre">Maria Elena Coronado Rodriguez</p>
                 </div>
             </div>
         </div>
     </section>
 
-    <!-- Mesa de Regalos -->
+    <!-- Galería -->
+    <section class="section">
+        <div class="slider-wrapper">
+            <button class="slider-btn slider-btn-prev" onclick="prevSlide()" aria-label="Anterior">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="15 18 9 12 15 6"></polyline>
+                </svg>
+            </button>
+            <button class="slider-btn slider-btn-next" onclick="nextSlide()" aria-label="Siguiente">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                    stroke-linecap="round" stroke-linejoin="round">
+                    <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+            </button>
+            <div class="slider" data-aos="fade-up">
+                <div class="slide active"><img src="fotos/foto1.jpeg" alt="Foto Britney 1"></div>
+                <div class="slide"><img src="fotos/foto2.jpeg" alt="Foto Britney 2"></div>
+                <div class="slide"><img src="fotos/foto3.jpeg" alt="Foto Britney 3"></div>
+                <div class="slide"><img src="fotos/foto4.jpeg" alt="Foto Britney 4"></div>
+            </div>
+            <div class="slider-dots">
+                <span class="dot active" onclick="setSlide(0)"></span>
+                <span class="dot" onclick="setSlide(1)"></span>
+                <span class="dot" onclick="setSlide(2)"></span>
+                <span class="dot" onclick="setSlide(3)"></span>
+            </div>
+        </div>
+    </section>
+
+    <!-- Itinerario -->
+    <section class="section">
+        <h2 data-aos="fade-up">Itinerario del Evento</h2>
+        <p class="section-subtitle" data-aos="fade-up">Los momentos más esperados</p>
+        <div class="timeline">
+            <!-- Entrada Quinceañera -->
+            <div class="event" data-aos="fade-left">
+                <div class="event-icon-container">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M12 2a5 5 0 1 1 0 10A5 5 0 0 1 12 2zm0 12c5.33 0 8 2.67 8 4v2H4v-2c0-1.33 2.67-4 8-4z"/>
+                    </svg>
+                </div>
+                <div class="event-content">
+                    <h3>8:30 HRS - Entrada de la Quinceañera</h3>
+                    <p style="font-weight: 600; color: var(--azul-marino); margin-bottom: 5px;">Iglesia</p>
+                    <p>El momento más esperado: la llegada de nuestra princesa.</p>
+                    <div class="gps-container" style="flex-wrap: wrap;">
+                        <span style="width: 100%; font-size: 0.7rem; font-weight: 700; letter-spacing: 2px; text-transform: uppercase; color: var(--plata-oscuro); margin-bottom: 4px;">Ceremonia Religiosa</span>
+                        <a href="https://www.google.com/maps/search/?api=1&query=Iglesia" target="_blank"
+                            class="btn-gps btn-gmaps">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            Google Maps
+                        </a>
+                        <a href="https://waze.com/ul?q=Iglesia&navigate=yes" target="_blank"
+                            class="btn-gps btn-waze">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21.5 10.7c-.5-1.1-1.3-2.1-2.4-2.8-1.1-.7-2.4-1-3.7-1-1.2 0-2.3.3-3.3.9-1-.6-2.1-.9-3.3-.9-1.3 0-2.6.3-3.7 1-1.1.7-1.9 1.7-2.4 2.8C2.2 11.9 2 13.1 2 14.3c0 .8.1 1.7.4 2.5.4 1 1 1.8 1.8 2.5.8.7 1.7 1.1 2.8 1.3 1 .2 2 .2 3 0 1-.2 1.9-.7 2.7-1.3.8.6 1.7 1.1 2.7 1.3 1 .2 2 .2 3 0 1.1-.2 2-.6 2.8-1.3.8-.7 1.4-1.5 1.8-2.5.3-.8.4-1.7.4-2.5 0-1.2-.2-2.4-.7-3.6z" />
+                            </svg>
+                            Waze
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recepción -->
+            <div class="event" data-aos="fade-left" data-aos-delay="200">
+                <div class="event-icon-container">
+                    <svg viewBox="0 0 24 24">
+                        <path d="M21 2H3v2l8 9v5H6v2h12v-2h-5v-5l8-9V2zM7.44 4h9.12L12 9.13 7.44 4z" />
+                    </svg>
+                </div>
+                <div class="event-content">
+                    <h3>19:30 HRS - Recepción de Gala</h3>
+                    <p style="font-weight: 600; color: var(--azul-marino); margin-bottom: 5px;">Salón Blue Diamond</p>
+                    <p>Cóctel de bienvenida, alfombra plateada y sesión fotográfica para los invitados.</p>
+                    <div class="gps-container">
+                        <a href="https://www.google.com/maps/search/?api=1&query=Salon+Blue+Diamond" target="_blank"
+                            class="btn-gps btn-gmaps">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M12 2C8.13 2 5 5.13 5 9c0 5.25 7 13 7 13s7-7.75 7-13c0-3.87-3.13-7-7-7zm0 9.5c-1.38 0-2.5-1.12-2.5-2.5s1.12-2.5 2.5-2.5 2.5 1.12 2.5 2.5-1.12 2.5-2.5 2.5z" />
+                            </svg>
+                            Google Maps
+                        </a>
+                        <a href="https://waze.com/ul?q=Salon+Blue+Diamond&navigate=yes" target="_blank"
+                            class="btn-gps btn-waze">
+                            <svg viewBox="0 0 24 24">
+                                <path d="M21.5 10.7c-.5-1.1-1.3-2.1-2.4-2.8-1.1-.7-2.4-1-3.7-1-1.2 0-2.3.3-3.3.9-1-.6-2.1-.9-3.3-.9-1.3 0-2.6.3-3.7 1-1.1.7-1.9 1.7-2.4 2.8C2.2 11.9 2 13.1 2 14.3c0 .8.1 1.7.4 2.5.4 1 1 1.8 1.8 2.5.8.7 1.7 1.1 2.8 1.3 1 .2 2 .2 3 0 1-.2 1.9-.7 2.7-1.3.8.6 1.7 1.1 2.7 1.3 1 .2 2 .2 3 0 1.1-.2 2-.6 2.8-1.3.8-.7 1.4-1.5 1.8-2.5.3-.8.4-1.7.4-2.5 0-1.2-.2-2.4-.7-3.6z" />
+                            </svg>
+                            Waze
+                        </a>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Aviso de Alcohol -->
+    <div class="section" style="padding-top: 0; padding-bottom: 0; margin-top: -20px; margin-bottom: 20px;">
+        <div style="max-width: 680px; margin: 0 auto; background: #fff3e0; border-left: 4px solid #e65100; border-radius: 12px; padding: 16px 20px; text-align: left;">
+            <p style="font-weight: 700; color: #e65100; font-size: 0.9rem; margin-bottom: 4px;">🚫 No se permite la entrada de alcohol</p>
+            <p style="font-size: 0.84rem; color: #5d4037;">En caso de ingresar un six, el costo es de <strong>$50</strong>.</p>
+        </div>
+    </div>
+
+
     <section class="section" data-aos="fade-up">
         <h2>Mesa de Regalos</h2>
         <p class="section-subtitle">Tu compañía es mi mayor regalo, pero si deseas tener un detalle conmigo...</p>
 
         <div class="gift-cards">
-            <!-- Opción Transferencia -->
-            <div class="gift-card">
-                <div class="gift-card-icon">
-                    <svg viewBox="0 0 24 24">
-                        <path
-                            d="M20 4H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V6c0-1.11-.89-2-2-2zm-1 3.5c0 .28-.22.5-.5.5h-13c-.28 0-.5-.22-.5-.5v-1c0-.28.22-.5.5-.5h13c.28 0 .5.22.5.5v1zM4 18v-6h16v6H4z" />
-                    </svg>
-                </div>
-                <h3>Regalo en Efectivo / Transferencia</h3>
-                <p>Puedes realizar una transferencia bancaria a la siguiente cuenta:</p>
-                <div class="bank-details">
-                    <div class="bank-row">
-                        <span class="bank-label">Banco:</span>
-                        <span class="bank-value">BBVA</span>
-                    </div>
-                    <div class="bank-row">
-                        <span class="bank-label">CLABE:</span>
-                        <span class="bank-value" id="bank-clabe">012180012345678901</span>
-                    </div>
-                    <div class="bank-row">
-                        <span class="bank-label">Titular:</span>
-                        <span class="bank-value">Britney Pérez</span>
-                    </div>
-                </div>
-                <button class="btn-copy-account" onclick="copyCLABE()">Copiar CLABE</button>
-            </div>
-
             <!-- Opción Lluvia de Sobres -->
             <div class="gift-card">
                 <div class="gift-card-icon">
                     <svg viewBox="0 0 24 24">
-                        <path
-                            d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
+                        <path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z" />
                     </svg>
                 </div>
                 <h3>Lluvia de Sobres</h3>
-                <p>Contaremos con un baúl especial de sobres en la entrada del salón el día de la recepción para recibir
-                    tus detalles en efectivo.</p>
+                <p>Contaremos con un baúl especial de sobres en la entrada del salón el día de la recepción para recibir tus detalles en efectivo.</p>
+                <div style="margin-top: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; background: #e8f5e9; border-radius: 10px; padding: 12px 16px;">
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="#2e7d32">
+                        <path d="M20 6h-2.18c.07-.28.18-.54.18-.83C18 3.42 16.58 2 14.83 2c-.96 0-1.82.42-2.43 1.09L12 3.67l-.4-.58C10.99 2.42 10.13 2 9.17 2 7.42 2 6 3.42 6 5.17c0 .29.11.55.18.83H4c-1.11 0-1.99.89-1.99 2L2 19c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5.17-2c.46 0 .83.37.83.83 0 .46-.37.83-.83.83H13v-.83C13 4.37 14.37 3 14.83 4zm-5.66 0C9.63 4 10 4.37 10 4.83V5.66H9.17c-.46 0-.83-.37-.83-.83C8.34 4.37 8.71 4 9.17 4zM11 11H4V8h7v3zm2 0V8h7v3h-7zm-2 8H4v-6h7v6zm2 0v-6h7v6h-7z"/>
+                    </svg>
+                    <p style="font-size: 0.82rem; color: #2e7d32; font-weight: 600; margin: 0;">También puedes traer un regalo 🎁</p>
+                </div>
             </div>
         </div>
     </section>
 
     <!-- Vestimenta -->
     <section class="section"
-        style="background: linear-gradient(135deg, var(--azul-profundo) 0%, var(--azul-medio) 100%); color: white; border-top: 5px solid var(--azul-claro); max-width: 100%;">
+        style="background: linear-gradient(180deg, #0a192f 0%, #0d2137 20%, #0a3d5c 40%, #0097a7 70%, #4dd0e1 100%); color: white; border-top: 5px solid var(--azul-claro); max-width: 100%;">
         <div data-aos="zoom-in">
             <h2 style="color: var(--azul-claro);">Código de Vestimenta</h2>
-            <p class="section-subtitle" style="color: var(--plata-medio);">Respetuosamente solicitamos cumplir con la
-                etiqueta de gala</p>
+            <p class="section-subtitle" style="color: var(--plata-medio);">Formal</p>
 
             <div class="dress-cards">
                 <div class="dress-card">
@@ -1342,7 +1335,7 @@
                         </svg>
                     </div>
                     <h4>Mujeres</h4>
-                    <p>Vestido Largo de Noche</p>
+                    <p>Vestimenta Formal</p>
                 </div>
                 <div class="dress-card">
                     <div class="dress-silhouette">
@@ -1355,35 +1348,21 @@
                         </svg>
                     </div>
                     <h4>Hombres</h4>
-                    <p>Traje Completo Formal</p>
+                    <p>Vestimenta Formal</p>
                 </div>
             </div>
 
             <div class="color-palette-guide">
-                <div class="color-palette-title" style="color: var(--azul-profundo);">Colores Sugeridos y Prohibidos
+                <div class="color-palette-title" style="color: var(--azul-profundo);">Color Prohibido
                 </div>
                 <div class="colors-row">
                     <div class="color-bubble-item">
-                        <div class="color-bubble prohibido" style="background: #003d4d;"></div>
-                        Azul Noche
-                    </div>
-                    <div class="color-bubble-item">
-                        <div class="color-bubble prohibido" style="background: #bdc3c7;"></div>
-                        Plata
-                    </div>
-                    <div class="color-bubble-item">
-                        <div class="color-bubble prohibido" style="background: #000000;"></div>
-                        Negro y Gris Oscuro
-                    </div>
-                    <div class="color-bubble-item">
-                        <div class="color-bubble prohibido" style="background: #b2ebf2;"></div>
-                        Celeste y Azul Claro
+                        <div class="color-bubble prohibido" style="background: #87ceeb;"></div>
+                        Celeste
                     </div>
                 </div>
-                <p
-                    style="font-size: 0.72rem; color: var(--plata-oscuro); margin-top: 15px; font-style: italic; line-height: 1.4;">
-                    * Respetuosamente solicitamos evitar toda la gama de negros (incluyendo gris Oxford/oscuro) y la
-                    gama de celestes (azules muy claros) para preservar la exclusividad del color de la quinceañera.
+                <p style="font-size: 0.72rem; color: var(--plata-oscuro); margin-top: 15px; font-style: italic; line-height: 1.4;">
+                    Por favor evita usar color celeste en tu vestimenta.
                 </p>
             </div>
 
@@ -1418,7 +1397,7 @@
             const depth = window.pageYOffset;
             const background = document.getElementById('hero-parallax');
             if (background) {
-                background.style.transform = `scale(1.05) translateY(${depth * 0.35}px)`;
+                background.style.backgroundPositionY = `calc(center + ${depth * 0.2}px)`;
             }
         });
 
@@ -1521,7 +1500,7 @@
             const pases = params.get('p') ? params.get('p') + ' pase' + (parseInt(params.get('p')) > 1 ? 's' : '') : '';
             const detalle = familia ? `\n\n ${familia}\n ${pases}` : '';
             setTimeout(() => {
-                window.open(`https://wa.me/528446082601?text=${encodeURIComponent('¡Hola! Confirmo mi asistencia a los XV Años de Britney.' + detalle)}`, "_blank");
+                window.open(`https://wa.me/528446082601?text=${encodeURIComponent('¡Hola! Confirmo mi asistencia a los XV años de Britney.' + detalle)}`, "_blank");
             }, 1500);
         }
 
@@ -1536,12 +1515,7 @@
         }
 
         function copyCLABE() {
-            const clabeText = document.getElementById('bank-clabe').innerText;
-            navigator.clipboard.writeText(clabeText).then(() => {
-                showGlobalToast("¡CLABE copiada al portapapeles! 📋");
-            }).catch(err => {
-                console.error("No se pudo copiar la CLABE:", err);
-            });
+            // función removida (tarjeta bancaria eliminada)
         }
 
         // --- EFECTO DE DESTELLOS MÁGICOS (TWINKLING STARS CANVAS) ---
