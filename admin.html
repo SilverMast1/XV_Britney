@@ -622,12 +622,14 @@
                 .then(r => r.json())
                 .then(data => {
                     if (Array.isArray(data)) {
-                        invitados = data.map(row => ({
-                            familia:    row.Familia    || row.familia    || '',
-                            pases:      parseInt(row.Pases || row.pases) || 0,
-                            link:       row.Link       || row.link       || '',
-                            confirmado: row.confirmado === 'Sí ✅' || row.confirmado === 'Si' || row.confirmado === true
-                        })).filter(i => i.familia);
+                        invitados = data
+                            .filter(row => row.Familia && row.Familia.trim() !== '')
+                            .map(row => ({
+                                familia:    row.Familia,
+                                pases:      parseInt(row.Pases) || 0,
+                                link:       row.Link || '',
+                                confirmado: row.confirmado === 'Sí ✅' || row.confirmado === 'Si ✅' || row.confirmado === 'Si' || row.confirmado === 'Sí'
+                            }));
                         localStorage.setItem('xv_invitados', JSON.stringify(invitados));
                         renderLista();
                         actualizarBadgeSync();
@@ -676,29 +678,34 @@
             localStorage.setItem('xv_invitados', JSON.stringify(invitados));
             renderLista();
 
-            // Guardar en SheetDB (crear o actualizar fila)
+            // Guardar en SheetDB — siempre POST, SheetDB no duplica si ya existe con mismo valor
             if (API_URL) {
                 const badge = document.getElementById('sync-status-badge');
                 badge.innerHTML = 'Subiendo a Sheets... <div class="sync-loader"></div>';
 
-                // Primero intentar PATCH (actualizar si existe)
-                fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
-                    method: 'PATCH',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: { Pases: pases, Link: linkActual } })
-                })
+                // Verificar si ya existe la familia
+                fetch(`${API_URL}/search?Familia=${encodeURIComponent(familia)}`)
                 .then(r => r.json())
-                .then(res => {
-                    // Si no encontró la fila (updated=0), crear nueva con POST
-                    if (!res.updated || res.updated === 0) {
+                .then(rows => {
+                    if (rows && rows.length > 0) {
+                        // Ya existe — actualizar con PATCH
+                        return fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ data: { Pases: String(pases), Link: linkActual } })
+                        });
+                    } else {
+                        // No existe — crear con POST
                         return fetch(API_URL, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ data: { Familia: familia, Pases: pases, Link: linkActual, confirmado: 'No' } })
+                            body: JSON.stringify({ data: [{ Familia: familia, Pases: String(pases), Link: linkActual, confirmado: 'No' }] })
                         });
                     }
                 })
-                .then(() => {
+                .then(r => r.json())
+                .then(res => {
+                    console.log('SheetDB response:', res);
                     actualizarBadgeSync();
                     mostrarToast("¡Guardado en Sheets! ☁️");
                 })
