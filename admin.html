@@ -573,8 +573,11 @@
         let linkActual = '';
         let familiaActual = '';
         let pasesActual = 0;
-        let API_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
-        localStorage.setItem('xv_api_url', API_URL);
+        let API_URL = localStorage.getItem('xv_api_url');
+        if (API_URL === null) {
+            API_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
+            localStorage.setItem('xv_api_url', API_URL);
+        }
 
         // Cargar lista guardada localmente inicialmente
         let invitados = JSON.parse(localStorage.getItem('xv_invitados') || '[]');
@@ -619,7 +622,10 @@
             badge.innerHTML = 'Sincronizando... <div class="sync-loader"></div>';
 
             fetch(API_URL)
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) throw new Error('Error de red al sincronizar');
+                    return r.json();
+                })
                 .then(data => {
                     if (Array.isArray(data)) {
                         invitados = data
@@ -633,6 +639,10 @@
                         localStorage.setItem('xv_invitados', JSON.stringify(invitados));
                         renderLista();
                         actualizarBadgeSync();
+                    } else {
+                        console.error('Invalid data format from API:', data);
+                        badge.innerHTML = 'Error de datos ⚠️';
+                        setTimeout(actualizarBadgeSync, 3000);
                     }
                 })
                 .catch(err => {
@@ -658,7 +668,8 @@
 
             familiaActual = familia;
             pasesActual = pases;
-            linkActual = `${BASE_URL}?n=${encodeURIComponent(familia)}&p=${pases}`;
+            const apiParam = API_URL ? `&api=${encodeURIComponent(API_URL)}` : '';
+            linkActual = `${BASE_URL}?n=${encodeURIComponent(familia)}&p=${pases}${apiParam}`;
 
             // Mostrar preview
             document.getElementById('prev-familia').innerText = 'Familia ' + familia;
@@ -685,7 +696,10 @@
 
                 // Verificar si ya existe la familia
                 fetch(`${API_URL}/search?Familia=${encodeURIComponent(familia)}`)
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al buscar en Sheets');
+                    return r.json();
+                })
                 .then(rows => {
                     if (rows && rows.length > 0) {
                         // Ya existe — actualizar con PATCH
@@ -703,7 +717,10 @@
                         });
                     }
                 })
-                .then(r => r.json())
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al guardar en Sheets');
+                    return r.json();
+                })
                 .then(res => {
                     console.log('SheetDB response:', res);
                     actualizarBadgeSync();
@@ -810,12 +827,19 @@
             mostrarToast(`Familia ${invitados[idx].familia}: ${estado}`);
 
             // Actualizar en SheetDB
-            const valor = invitados[idx].confirmado ? 'Sí ✅' : 'No';
-            fetch(`${API_URL}/Familia/${encodeURIComponent(invitados[idx].familia)}`, {
-                method: 'PATCH',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ data: { confirmado: valor } })
-            }).catch(err => console.error('SheetDB PATCH error:', err));
+            if (API_URL) {
+                const valor = invitados[idx].confirmado ? 'Sí ✅' : 'No';
+                fetch(`${API_URL}/Familia/${encodeURIComponent(invitados[idx].familia)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: { confirmado: valor } })
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al actualizar confirmación');
+                    return r.json();
+                })
+                .catch(err => console.error('SheetDB PATCH error:', err));
+            }
         }
 
         function copiarDeLista(idx) {
@@ -832,6 +856,10 @@
             if (API_URL) {
                 fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
                     method: 'DELETE'
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al eliminar de Sheets');
+                    return r.json();
                 })
                 .then(() => mostrarToast("¡Eliminado! 🗑️"))
                 .catch(err => console.error('Error al eliminar:', err));

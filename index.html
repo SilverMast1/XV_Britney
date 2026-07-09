@@ -1142,8 +1142,6 @@
                 <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
             </svg>
         </a>
-            </svg>
-        </a>
     </section>
 
     <!-- TARJETA DE PASES (Link personalizado) -->
@@ -1518,7 +1516,7 @@
         }
 
         // --- CONFETTI GALA (AZUL, PLATA, BLANCO) ---
-        const SHEETDB_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
+        const SHEETDB_URL = params.get('api') ? decodeURIComponent(params.get('api')) : 'https://sheetdb.io/api/v1/iszy6pglqu7be';
 
         function confirmar() {
             confetti({
