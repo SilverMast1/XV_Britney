@@ -306,10 +306,13 @@
             justify-content: space-between;
             box-shadow: 0 4px 12px rgba(0, 151, 167, 0.08);
             border-left: 4px solid #4dd0e1;
+            gap: 10px;
+            flex-wrap: wrap;
         }
 
         .invitado-info {
             text-align: left;
+            flex: 1;
         }
 
         .invitado-nombre {
@@ -324,6 +327,42 @@
             letter-spacing: 1px;
             margin-top: 2px;
         }
+
+        .invitado-confirmado {
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 4px;
+        }
+
+        .invitado-confirmado.si  { color: #2e7d32; }
+        .invitado-confirmado.no  { color: #b0bec5; }
+
+        .btn-confirmar {
+            padding: 7px 13px;
+            border-radius: 50px;
+            border: 2px solid;
+            font-size: 0.65rem;
+            font-weight: 700;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: 0.2s;
+            white-space: nowrap;
+        }
+
+        .btn-confirmar.confirmado {
+            background: #e8f5e9;
+            border-color: #2e7d32;
+            color: #2e7d32;
+        }
+
+        .btn-confirmar.pendiente {
+            background: #fff8e1;
+            border-color: #f9a825;
+            color: #f9a825;
+        }
+
+        .btn-confirmar:hover { filter: brightness(0.92); }
 
         .btn-mini {
             padding: 7px 14px;
@@ -534,11 +573,8 @@
         let linkActual = '';
         let familiaActual = '';
         let pasesActual = 0;
-        let API_URL = localStorage.getItem('xv_api_url');
-        if (API_URL === null) {
-            API_URL = 'https://script.google.com/macros/s/AKfycbwijM5hjHLn5ugxz1SSr8QfNy0V-bjkNnOkmKIFyel4ECx5RwsMRmMFWt6jxXmk1H_zDQ/exec';
-            localStorage.setItem('xv_api_url', API_URL);
-        }
+        let API_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
+        localStorage.setItem('xv_api_url', API_URL);
 
         // Cargar lista guardada localmente inicialmente
         let invitados = JSON.parse(localStorage.getItem('xv_invitados') || '[]');
@@ -576,25 +612,29 @@
             }
         }
 
-        // --- SINCRONIZACIÓN CON GOOGLE SHEETS ---
+        // --- SINCRONIZACIÓN CON GOOGLE SHEETS (SheetDB) ---
         function sincronizarConNube() {
             if (!API_URL) return;
             const badge = document.getElementById('sync-status-badge');
             badge.innerHTML = 'Sincronizando... <div class="sync-loader"></div>';
 
             fetch(API_URL)
-                .then(response => response.json())
+                .then(r => r.json())
                 .then(data => {
                     if (Array.isArray(data)) {
-                        invitados = data;
+                        invitados = data.map(row => ({
+                            familia:    row.Familia    || row.familia    || '',
+                            pases:      parseInt(row.Pases || row.pases) || 0,
+                            link:       row.Link       || row.link       || '',
+                            confirmado: row.confirmado === 'Sí ✅' || row.confirmado === 'Si' || row.confirmado === true
+                        })).filter(i => i.familia);
                         localStorage.setItem('xv_invitados', JSON.stringify(invitados));
                         renderLista();
                         actualizarBadgeSync();
-                        mostrarToast("¡Datos sincronizados! 🔄");
                     }
                 })
                 .catch(err => {
-                    console.error("Error al sincronizar con Google Sheets:", err);
+                    console.error('Error SheetDB:', err);
                     badge.innerHTML = 'Error de conexión ⚠️';
                     setTimeout(actualizarBadgeSync, 3000);
                 });
@@ -631,30 +671,42 @@
                 invitados[existe].pases = pases;
                 invitados[existe].link = linkActual;
             } else {
-                invitados.push({ familia, pases, link: linkActual });
+                invitados.push({ familia, pases, link: linkActual, confirmado: false });
             }
             localStorage.setItem('xv_invitados', JSON.stringify(invitados));
             renderLista();
 
-            // Guardar en la nube
+            // Guardar en SheetDB (crear o actualizar fila)
             if (API_URL) {
                 const badge = document.getElementById('sync-status-badge');
                 badge.innerHTML = 'Subiendo a Sheets... <div class="sync-loader"></div>';
-                fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
+
+                // Primero intentar PATCH (actualizar si existe)
+                fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
+                    method: 'PATCH',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ familia, pases, link: linkActual })
+                    body: JSON.stringify({ data: { Pases: pases, Link: linkActual } })
                 })
-                    .then(() => {
-                        actualizarBadgeSync();
-                        mostrarToast("¡Guardado en la nube! ☁️");
-                    })
-                    .catch(err => {
-                        console.error("Error al guardar en la nube:", err);
-                        badge.innerHTML = 'Error al subir ⚠️';
-                        setTimeout(actualizarBadgeSync, 3000);
-                    });
+                .then(r => r.json())
+                .then(res => {
+                    // Si no encontró la fila (updated=0), crear nueva con POST
+                    if (!res.updated || res.updated === 0) {
+                        return fetch(API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ data: { Familia: familia, Pases: pases, Link: linkActual, confirmado: 'No' } })
+                        });
+                    }
+                })
+                .then(() => {
+                    actualizarBadgeSync();
+                    mostrarToast("¡Guardado en Sheets! ☁️");
+                })
+                .catch(err => {
+                    console.error("Error SheetDB:", err);
+                    document.getElementById('sync-status-badge').innerHTML = 'Error ⚠️';
+                    setTimeout(actualizarBadgeSync, 3000);
+                });
             }
         }
 
@@ -699,22 +751,64 @@
             document.getElementById('lista-section').style.display = 'block';
             const container = document.getElementById('lista-items');
             container.innerHTML = '';
+
+            // Contador de confirmados
+            const totalConfirmados = invitados.filter(i => i.confirmado).length;
+            const totalPasesConfirmados = invitados.filter(i => i.confirmado).reduce((s, i) => s + i.pases, 0);
+
+            // Encabezado resumen
+            let resumen = document.getElementById('lista-resumen');
+            if (!resumen) {
+                resumen = document.createElement('div');
+                resumen.id = 'lista-resumen';
+                resumen.style.cssText = 'text-align:center; margin-bottom:16px; font-size:0.75rem; color:#006064; background:#e0f7fa; border-radius:10px; padding:10px 16px; font-weight:600; letter-spacing:1px;';
+                document.getElementById('lista-items').before(resumen);
+            }
+            resumen.innerHTML = `✅ ${totalConfirmados} de ${invitados.length} familias confirmadas &nbsp;|&nbsp; 🎟 ${totalPasesConfirmados} pases confirmados`;
+
             invitados.forEach((inv, idx) => {
+                if (inv.confirmado === undefined) inv.confirmado = false;
                 const div = document.createElement('div');
                 div.className = 'invitado-item';
+                div.style.borderLeftColor = inv.confirmado ? '#2e7d32' : '#4dd0e1';
                 div.innerHTML = `
                     <div class="invitado-info">
                         <div class="invitado-nombre">Familia ${inv.familia}</div>
                         <div class="invitado-pases">${inv.pases} pase${inv.pases > 1 ? 's' : ''}</div>
+                        <div class="invitado-confirmado ${inv.confirmado ? 'si' : 'no'}">
+                            ${inv.confirmado ? '✅ CONFIRMADO' : '⏳ PENDIENTE'}
+                        </div>
                     </div>
-                    <div>
-                        <button class="btn-mini btn-mini-copy" onclick="window.open(invitados[${idx}].link,'_blank')">Ver</button>
-                        <button class="btn-mini btn-mini-copy" onclick="copiarDeLista(${idx})">Copiar</button>
-                        <button class="btn-mini btn-mini-del"  onclick="eliminarDeLista(${idx})">✕</button>
+                    <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
+                        <button class="btn-confirmar ${inv.confirmado ? 'confirmado' : 'pendiente'}"
+                            onclick="toggleConfirmado(${idx})">
+                            ${inv.confirmado ? '✅ Confirmado' : '⏳ Confirmar'}
+                        </button>
+                        <div style="display:flex; gap:6px;">
+                            <button class="btn-mini btn-mini-copy" onclick="window.open(invitados[${idx}].link,'_blank')">Ver</button>
+                            <button class="btn-mini btn-mini-copy" onclick="copiarDeLista(${idx})">Copiar</button>
+                            <button class="btn-mini btn-mini-del" onclick="eliminarDeLista(${idx})">✕</button>
+                        </div>
                     </div>
                 `;
                 container.appendChild(div);
             });
+        }
+
+        function toggleConfirmado(idx) {
+            invitados[idx].confirmado = !invitados[idx].confirmado;
+            localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+            renderLista();
+            const estado = invitados[idx].confirmado ? 'Confirmado ✅' : 'Pendiente ⏳';
+            mostrarToast(`Familia ${invitados[idx].familia}: ${estado}`);
+
+            // Actualizar en SheetDB
+            const valor = invitados[idx].confirmado ? 'Sí ✅' : 'No';
+            fetch(`${API_URL}/Familia/${encodeURIComponent(invitados[idx].familia)}`, {
+                method: 'PATCH',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ data: { confirmado: valor } })
+            }).catch(err => console.error('SheetDB PATCH error:', err));
         }
 
         function copiarDeLista(idx) {
@@ -727,24 +821,13 @@
             localStorage.setItem('xv_invitados', JSON.stringify(invitados));
             renderLista();
 
+            // Eliminar de SheetDB
             if (API_URL) {
-                const badge = document.getElementById('sync-status-badge');
-                badge.innerHTML = 'Eliminando de la nube... <div class="sync-loader"></div>';
-                fetch(API_URL, {
-                    method: 'POST',
-                    mode: 'no-cors',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ action: 'delete', familia: familia })
+                fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
+                    method: 'DELETE'
                 })
-                    .then(() => {
-                        actualizarBadgeSync();
-                        mostrarToast("¡Eliminado de la nube! ☁️");
-                    })
-                    .catch(err => {
-                        console.error("Error al eliminar de la nube:", err);
-                        badge.innerHTML = 'Error al eliminar ⚠️';
-                        setTimeout(actualizarBadgeSync, 3000);
-                    });
+                .then(() => mostrarToast("¡Eliminado! 🗑️"))
+                .catch(err => console.error('Error al eliminar:', err));
             }
         }
 

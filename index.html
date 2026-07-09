@@ -175,13 +175,13 @@
         }
 
         .scroll-down svg {
-            width: 24px;
-            height: 24px;
+            width: 36px;
+            height: 36px;
             fill: none;
             stroke: white;
-            stroke-width: 2;
+            stroke-width: 2.5;
             animation: bounce 2s infinite;
-            margin-top: 8px;
+            filter: drop-shadow(0 0 6px rgba(77,208,225,0.8));
         }
 
         @keyframes bounce {
@@ -1138,9 +1138,10 @@
             <p>24 de Julio de 2026</p>
         </div>
         <a href="#countdown-section" class="scroll-down">
-            <span>Deslizar</span>
             <svg viewBox="0 0 24 24">
                 <path d="M7 10l5 5 5-5" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" />
+            </svg>
+        </a>
             </svg>
         </a>
     </section>
@@ -1265,7 +1266,7 @@
                     </svg>
                 </div>
                 <div class="event-content">
-                    <h3>5:00 HRS - Ceremonia de la Quinceañera</h3>
+                    <h3>17:00 - Ceremonia de la Quinceañera</h3>
                     <p style="font-weight: 600; color: var(--azul-marino); margin-bottom: 5px;">Parroquia Santa María Reina</p>
                     <p style="font-size: 0.8rem; color: var(--plata-oscuro); margin-top: 4px;">📍 Artemio de Valle Arizpe 486, Satélite Sur, 25113 Saltillo, Coah.</p>
                     <div class="gps-container" style="flex-wrap: wrap;">
@@ -1289,7 +1290,7 @@
                     </svg>
                 </div>
                 <div class="event-content">
-                    <h3>7:00 HRS - Recepción</h3>
+                    <h3>19:00 - Recepción</h3>
                     <p style="font-weight: 600; color: var(--azul-marino); margin-bottom: 5px;">Florval Recepciones</p>
                     <p style="font-size: 0.8rem; color: var(--plata-oscuro); margin-top: 4px;">📍 Rafael Cepeda 1272, Zona Centro, 25000 Saltillo, Coah.</p>
                     <div class="gps-container">
@@ -1517,6 +1518,8 @@
         }
 
         // --- CONFETTI GALA (AZUL, PLATA, BLANCO) ---
+        const SHEETDB_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
+
         function confirmar() {
             confetti({
                 particleCount: 160,
@@ -1524,9 +1527,20 @@
                 origin: { y: 0.6 },
                 colors: ['#0a192f', '#0097a7', '#4dd0e1', '#bdc3c7', '#ffffff']
             });
-            const familia = params.get('n') ? 'Familia ' + params.get('n') : '';
-            const pases = params.get('p') ? params.get('p') + ' pase' + (parseInt(params.get('p')) > 1 ? 's' : '') : '';
-            const detalle = familia ? `\n\n ${familia}\n ${pases}` : '';
+
+            const familia = params.get('n') ? params.get('n') : '';
+            const pases   = params.get('p') ? params.get('p') : '';
+
+            // Actualizar columna "confirmado" en Google Sheets via SheetDB
+            if (familia) {
+                fetch(`${SHEETDB_URL}/Familia/${encodeURIComponent(familia)}`, {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: { confirmado: 'Sí ✅' } })
+                }).catch(err => console.log('SheetDB error:', err));
+            }
+
+            const detalle = familia ? `\n\n Familia ${familia}\n ${pases} pase${parseInt(pases) > 1 ? 's' : ''}` : '';
             setTimeout(() => {
                 window.open(`https://wa.me/528446082601?text=${encodeURIComponent('¡Hola! Confirmo mi asistencia a los XV años de Britney.' + detalle)}`, "_blank");
             }, 1500);
