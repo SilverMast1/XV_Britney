@@ -631,14 +631,22 @@
                 })
                 .then(data => {
                     if (Array.isArray(data)) {
-                        invitados = data
+                        // Preservar locales no sincronizados
+                        const pendientes = invitados.filter(i => i.sincronizado === false);
+
+                        const cloudInvitados = data
                             .filter(row => row.Familia && row.Familia.trim() !== '')
                             .map(row => ({
                                 familia:    row.Familia,
                                 pases:      parseInt(row.Pases) || 0,
                                 link:       row.Link || '',
-                                confirmado: row.confirmado === 'Sí ✅' || row.confirmado === 'Si ✅' || row.confirmado === 'Si' || row.confirmado === 'Sí'
+                                confirmado: row.confirmado === 'Sí ✅' || row.confirmado === 'Si ✅' || row.confirmado === 'Si' || row.confirmado === 'Sí',
+                                sincronizado: true
                             }));
+
+                        const filtradosPendientes = pendientes.filter(p => !cloudInvitados.some(c => c.familia === p.familia));
+                        invitados = [...cloudInvitados, ...filtradosPendientes];
+
                         localStorage.setItem('xv_invitados', JSON.stringify(invitados));
                         renderLista();
                         actualizarBadgeSync();
@@ -686,8 +694,9 @@
             if (existe >= 0) {
                 invitados[existe].pases = pases;
                 invitados[existe].link = linkActual;
+                invitados[existe].sincronizado = !API_URL;
             } else {
-                invitados.push({ familia, pases, link: linkActual, confirmado: false });
+                invitados.push({ familia, pases, link: linkActual, confirmado: false, sincronizado: !API_URL });
             }
             localStorage.setItem('xv_invitados', JSON.stringify(invitados));
             renderLista();
@@ -726,6 +735,13 @@
                 })
                 .then(res => {
                     console.log('SheetDB response:', res);
+                    // Marcar como sincronizado localmente
+                    const idx = invitados.findIndex(i => i.familia === familia);
+                    if (idx >= 0) {
+                        invitados[idx].sincronizado = true;
+                        localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+                        renderLista();
+                    }
                     actualizarBadgeSync();
                     mostrarToast("¡Guardado en Sheets! ☁️");
                 })
@@ -805,6 +821,7 @@
                         <div class="invitado-confirmado ${inv.confirmado ? 'si' : 'no'}">
                             ${inv.confirmado ? '✅ CONFIRMADO' : '⏳ PENDIENTE'}
                         </div>
+                        ${inv.sincronizado === false ? '<div class="invitado-confirmado" style="color: #c62828; font-weight: 700; margin-top: 4px;">⚠️ PENDIENTE EN SHEETS</div>' : ''}
                     </div>
                     <div style="display:flex; flex-direction:column; gap:6px; align-items:flex-end;">
                         <button class="btn-confirmar ${inv.confirmado ? 'confirmado' : 'pendiente'}"
@@ -812,6 +829,7 @@
                             ${inv.confirmado ? '✅ Confirmado' : '⏳ Confirmar'}
                         </button>
                         <div style="display:flex; gap:6px;">
+                            ${inv.sincronizado === false ? `<button class="btn-mini" style="background:#fff3e0; color:#e65100; border:1px solid #ffb74d;" onclick="reintentarGuardado(${idx})">Reintentar</button>` : ''}
                             <button class="btn-mini btn-mini-copy" onclick="window.open(invitados[${idx}].link,'_blank')">Ver</button>
                             <button class="btn-mini btn-mini-copy" onclick="copiarDeLista(${idx})">Copiar</button>
                             <button class="btn-mini btn-mini-del" onclick="eliminarDeLista(${idx})">✕</button>
@@ -819,6 +837,53 @@
                     </div>
                 `;
                 container.appendChild(div);
+            });
+        }
+
+        function reintentarGuardado(idx) {
+            const inv = invitados[idx];
+            if (!API_URL) return;
+
+            const badge = document.getElementById('sync-status-badge');
+            badge.innerHTML = 'Subiendo pendiente... <div class="sync-loader"></div>';
+
+            fetch(`${API_URL}/search?Familia=${encodeURIComponent(inv.familia)}`)
+            .then(r => {
+                if (!r.ok) throw new Error('Error al buscar en Sheets');
+                return r.json();
+            })
+            .then(rows => {
+                if (rows && rows.length > 0) {
+                    return fetch(`${API_URL}/Familia/${encodeURIComponent(inv.familia)}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: { Pases: String(inv.pases), Link: inv.link } })
+                    });
+                } else {
+                    return fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ data: [{ Familia: inv.familia, Pases: String(inv.pases), Link: inv.link, confirmado: inv.confirmado ? 'Sí ✅' : 'No' }] })
+                    });
+                }
+            })
+            .then(r => {
+                if (!r.ok) throw new Error('Error al guardar en Sheets');
+                return r.json();
+            })
+            .then(res => {
+                console.log('Reintento exitoso:', res);
+                invitados[idx].sincronizado = true;
+                localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+                renderLista();
+                actualizarBadgeSync();
+                mostrarToast("¡Sincronizado con Sheets! ☁️");
+            })
+            .catch(err => {
+                console.error("Error en reintento:", err);
+                badge.innerHTML = 'Error ⚠️';
+                setTimeout(actualizarBadgeSync, 3000);
+                mostrarToast("Error al reintentar guardar ⚠️");
             });
         }
 
