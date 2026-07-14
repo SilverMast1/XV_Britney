@@ -331,7 +331,8 @@
 
     <script>
         let API_URL = localStorage.getItem('xv_api_url');
-        if (API_URL === null) {
+        // Si no hay configuración o estaba apuntando a Google Apps Script, forzar que use SheetDB
+        if (API_URL === null || API_URL.includes('script.google.com')) {
             API_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
         }
 
