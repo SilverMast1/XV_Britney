@@ -1529,13 +1529,20 @@
             const familia = params.get('n') ? params.get('n') : '';
             const pases   = params.get('p') ? params.get('p') : '';
 
-            // Actualizar columna "confirmado" en Google Sheets via SheetDB
+            // Actualizar columna "confirmado" en Google Sheets via SheetDB / Apps Script
             if (familia) {
-                fetch(`${SHEETDB_URL}/Familia/${encodeURIComponent(familia)}`, {
-                    method: 'PATCH',
+                const isAppsScript = SHEETDB_URL.includes('script.google.com');
+                const url = isAppsScript ? SHEETDB_URL : `${SHEETDB_URL}/Familia/${encodeURIComponent(familia)}`;
+                const method = isAppsScript ? 'POST' : 'PATCH';
+                const body = isAppsScript 
+                    ? JSON.stringify({ familia: familia, confirmado: 'Sí ✅' })
+                    : JSON.stringify({ data: { confirmado: 'Sí ✅' } });
+
+                fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: { confirmado: 'Sí ✅' } })
-                }).catch(err => console.log('SheetDB error:', err));
+                    body: body
+                }).catch(err => console.log('API error:', err));
             }
 
             const detalle = familia ? `\n\n Familia ${familia}\n ${pases} pase${parseInt(pases) > 1 ? 's' : ''}` : '';

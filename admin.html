@@ -701,55 +701,88 @@
             localStorage.setItem('xv_invitados', JSON.stringify(invitados));
             renderLista();
 
-            // Guardar en SheetDB — siempre POST, SheetDB no duplica si ya existe con mismo valor
+            // Guardar en SheetDB / Apps Script
             if (API_URL) {
                 const badge = document.getElementById('sync-status-badge');
                 badge.innerHTML = 'Subiendo a Sheets... <div class="sync-loader"></div>';
 
-                // Verificar si ya existe la familia
-                fetch(`${API_URL}/search?Familia=${encodeURIComponent(familia)}`)
-                .then(r => {
-                    if (!r.ok) throw new Error('Error al buscar en Sheets');
-                    return r.json();
-                })
-                .then(rows => {
-                    if (rows && rows.length > 0) {
-                        // Ya existe — actualizar con PATCH
-                        return fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
-                            method: 'PATCH',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ data: { Pases: String(pases), Link: linkActual } })
-                        });
-                    } else {
-                        // No existe — crear con POST
-                        return fetch(API_URL, {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ data: [{ Familia: familia, Pases: String(pases), Link: linkActual, confirmado: 'No' }] })
-                        });
-                    }
-                })
-                .then(r => {
-                    if (!r.ok) throw new Error('Error al guardar en Sheets');
-                    return r.json();
-                })
-                .then(res => {
-                    console.log('SheetDB response:', res);
-                    // Marcar como sincronizado localmente
-                    const idx = invitados.findIndex(i => i.familia === familia);
-                    if (idx >= 0) {
-                        invitados[idx].sincronizado = true;
-                        localStorage.setItem('xv_invitados', JSON.stringify(invitados));
-                        renderLista();
-                    }
-                    actualizarBadgeSync();
-                    mostrarToast("¡Guardado en Sheets! ☁️");
-                })
-                .catch(err => {
-                    console.error("Error SheetDB:", err);
-                    document.getElementById('sync-status-badge').innerHTML = 'Error ⚠️';
-                    setTimeout(actualizarBadgeSync, 3000);
-                });
+                const isAppsScript = API_URL.includes('script.google.com');
+
+                if (isAppsScript) {
+                    // Google Apps Script - Solo un POST plano con claves en minúscula
+                    fetch(API_URL, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            familia: familia,
+                            pases: String(pases),
+                            link: linkActual,
+                            confirmado: 'No'
+                        })
+                    })
+                    .then(r => {
+                        if (!r.ok) throw new Error('Error al guardar en Sheets');
+                        return r.json();
+                    })
+                    .then(res => {
+                        console.log('Apps Script response:', res);
+                        const idx = invitados.findIndex(i => i.familia === familia);
+                        if (idx >= 0) {
+                            invitados[idx].sincronizado = true;
+                            localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+                            renderLista();
+                        }
+                        actualizarBadgeSync();
+                        mostrarToast("¡Guardado en Sheets! ☁️");
+                    })
+                    .catch(err => {
+                        console.error("Error Apps Script:", err);
+                        document.getElementById('sync-status-badge').innerHTML = 'Error ⚠️';
+                        setTimeout(actualizarBadgeSync, 3000);
+                    });
+                } else {
+                    // Legacy SheetDB
+                    fetch(`${API_URL}/search?Familia=${encodeURIComponent(familia)}`)
+                    .then(r => {
+                        if (!r.ok) throw new Error('Error al buscar en Sheets');
+                        return r.json();
+                    })
+                    .then(rows => {
+                        if (rows && rows.length > 0) {
+                            return fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
+                                method: 'PATCH',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ data: { Pases: String(pases), Link: linkActual } })
+                            });
+                        } else {
+                            return fetch(API_URL, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({ data: [{ Familia: familia, Pases: String(pases), Link: linkActual, confirmado: 'No' }] })
+                            });
+                        }
+                    })
+                    .then(r => {
+                        if (!r.ok) throw new Error('Error al guardar en Sheets');
+                        return r.json();
+                    })
+                    .then(res => {
+                        console.log('SheetDB response:', res);
+                        const idx = invitados.findIndex(i => i.familia === familia);
+                        if (idx >= 0) {
+                            invitados[idx].sincronizado = true;
+                            localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+                            renderLista();
+                        }
+                        actualizarBadgeSync();
+                        mostrarToast("¡Guardado en Sheets! ☁️");
+                    })
+                    .catch(err => {
+                        console.error("Error SheetDB:", err);
+                        document.getElementById('sync-status-badge').innerHTML = 'Error ⚠️';
+                        setTimeout(actualizarBadgeSync, 3000);
+                    });
+                }
             }
         }
 
@@ -847,44 +880,77 @@
             const badge = document.getElementById('sync-status-badge');
             badge.innerHTML = 'Subiendo pendiente... <div class="sync-loader"></div>';
 
-            fetch(`${API_URL}/search?Familia=${encodeURIComponent(inv.familia)}`)
-            .then(r => {
-                if (!r.ok) throw new Error('Error al buscar en Sheets');
-                return r.json();
-            })
-            .then(rows => {
-                if (rows && rows.length > 0) {
-                    return fetch(`${API_URL}/Familia/${encodeURIComponent(inv.familia)}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: { Pases: String(inv.pases), Link: inv.link } })
-                    });
-                } else {
-                    return fetch(API_URL, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ data: [{ Familia: inv.familia, Pases: String(inv.pases), Link: inv.link, confirmado: inv.confirmado ? 'Sí ✅' : 'No' }] })
-                    });
-                }
-            })
-            .then(r => {
-                if (!r.ok) throw new Error('Error al guardar en Sheets');
-                return r.json();
-            })
-            .then(res => {
-                console.log('Reintento exitoso:', res);
-                invitados[idx].sincronizado = true;
-                localStorage.setItem('xv_invitados', JSON.stringify(invitados));
-                renderLista();
-                actualizarBadgeSync();
-                mostrarToast("¡Sincronizado con Sheets! ☁️");
-            })
-            .catch(err => {
-                console.error("Error en reintento:", err);
-                badge.innerHTML = 'Error ⚠️';
-                setTimeout(actualizarBadgeSync, 3000);
-                mostrarToast("Error al reintentar guardar ⚠️");
-            });
+            const isAppsScript = API_URL.includes('script.google.com');
+
+            if (isAppsScript) {
+                fetch(API_URL, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        familia: inv.familia,
+                        pases: String(inv.pases),
+                        link: inv.link,
+                        confirmado: inv.confirmado ? 'Sí ✅' : 'No'
+                    })
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al guardar en Sheets');
+                    return r.json();
+                })
+                .then(res => {
+                    console.log('Reintento Apps Script exitoso:', res);
+                    invitados[idx].sincronizado = true;
+                    localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+                    renderLista();
+                    actualizarBadgeSync();
+                    mostrarToast("¡Sincronizado con Sheets! ☁️");
+                })
+                .catch(err => {
+                    console.error("Error en reintento Apps Script:", err);
+                    badge.innerHTML = 'Error ⚠️';
+                    setTimeout(actualizarBadgeSync, 3000);
+                    mostrarToast("Error al reintentar guardar ⚠️");
+                });
+            } else {
+                fetch(`${API_URL}/search?Familia=${encodeURIComponent(inv.familia)}`)
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al buscar en Sheets');
+                    return r.json();
+                })
+                .then(rows => {
+                    if (rows && rows.length > 0) {
+                        return fetch(`${API_URL}/Familia/${encodeURIComponent(inv.familia)}`, {
+                            method: 'PATCH',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ data: { Pases: String(inv.pases), Link: inv.link } })
+                        });
+                    } else {
+                        return fetch(API_URL, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ data: [{ Familia: inv.familia, Pases: String(inv.pases), Link: inv.link, confirmado: inv.confirmado ? 'Sí ✅' : 'No' }] })
+                        });
+                    }
+                })
+                .then(r => {
+                    if (!r.ok) throw new Error('Error al guardar en Sheets');
+                    return r.json();
+                })
+                .then(res => {
+                    console.log('Reintento SheetDB exitoso:', res);
+                    invitados[idx].sincronizado = true;
+                    localStorage.setItem('xv_invitados', JSON.stringify(invitados));
+                    renderLista();
+                    actualizarBadgeSync();
+                    mostrarToast("¡Sincronizado con Sheets! ☁️");
+                })
+                .catch(err => {
+                    console.error("Error en reintento SheetDB:", err);
+                    badge.innerHTML = 'Error ⚠️';
+                    setTimeout(actualizarBadgeSync, 3000);
+                    mostrarToast("Error al reintentar guardar ⚠️");
+                });
+            }
         }
 
         function toggleConfirmado(idx) {
@@ -894,19 +960,26 @@
             const estado = invitados[idx].confirmado ? 'Confirmado ✅' : 'Pendiente ⏳';
             mostrarToast(`Familia ${invitados[idx].familia}: ${estado}`);
 
-            // Actualizar en SheetDB
+            // Actualizar en SheetDB / Apps Script
             if (API_URL) {
                 const valor = invitados[idx].confirmado ? 'Sí ✅' : 'No';
-                fetch(`${API_URL}/Familia/${encodeURIComponent(invitados[idx].familia)}`, {
-                    method: 'PATCH',
+                const isAppsScript = API_URL.includes('script.google.com');
+                const url = isAppsScript ? API_URL : `${API_URL}/Familia/${encodeURIComponent(invitados[idx].familia)}`;
+                const method = isAppsScript ? 'POST' : 'PATCH';
+                const body = isAppsScript 
+                    ? JSON.stringify({ familia: invitados[idx].familia, confirmado: valor })
+                    : JSON.stringify({ data: { confirmado: valor } });
+
+                fetch(url, {
+                    method: method,
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ data: { confirmado: valor } })
+                    body: body
                 })
                 .then(r => {
                     if (!r.ok) throw new Error('Error al actualizar confirmación');
                     return r.json();
                 })
-                .catch(err => console.error('SheetDB PATCH error:', err));
+                .catch(err => console.error('API update error:', err));
             }
         }
 
@@ -920,10 +993,19 @@
             localStorage.setItem('xv_invitados', JSON.stringify(invitados));
             renderLista();
 
-            // Eliminar de SheetDB
+            // Eliminar de SheetDB / Apps Script
             if (API_URL) {
-                fetch(`${API_URL}/Familia/${encodeURIComponent(familia)}`, {
-                    method: 'DELETE'
+                const isAppsScript = API_URL.includes('script.google.com');
+                const url = isAppsScript ? API_URL : `${API_URL}/Familia/${encodeURIComponent(familia)}`;
+                const method = isAppsScript ? 'POST' : 'DELETE';
+                const body = isAppsScript 
+                    ? JSON.stringify({ familia: familia, action: 'delete' })
+                    : null;
+
+                fetch(url, {
+                    method: method,
+                    headers: isAppsScript ? { 'Content-Type': 'application/json' } : {},
+                    body: body
                 })
                 .then(r => {
                     if (!r.ok) throw new Error('Error al eliminar de Sheets');
