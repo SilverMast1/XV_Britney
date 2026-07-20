@@ -331,9 +331,9 @@
 
     <script>
         let API_URL = localStorage.getItem('xv_api_url');
-        // Si no hay configuración o estaba apuntando a Google Apps Script, forzar que use SheetDB
-        if (API_URL === null || API_URL.includes('script.google.com')) {
-            API_URL = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
+        if (API_URL === null || API_URL.includes('sheetdb.io')) {
+            API_URL = 'https://script.google.com/macros/s/AKfycbzt82an0oeBTjo4TncRopBnd85Yvm5AaUqfQKWCSJwy_ZhN8G5wBvWGoJXBl3h61ZAWSg/exec';
+            localStorage.setItem('xv_api_url', API_URL);
         }
 
         let invitados = JSON.parse(localStorage.getItem('xv_invitados') || '[]');

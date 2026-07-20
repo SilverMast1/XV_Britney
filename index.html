@@ -1517,11 +1517,7 @@
 
         // --- CONFETTI GALA (AZUL, PLATA, BLANCO) ---
         let apiParam = params.get('api') ? decodeURIComponent(params.get('api')) : '';
-        // Si la URL es de Google Apps Script, redirigir automáticamente a SheetDB
-        if (apiParam && apiParam.includes('script.google.com')) {
-            apiParam = 'https://sheetdb.io/api/v1/iszy6pglqu7be';
-        }
-        const SHEETDB_URL = apiParam || 'https://sheetdb.io/api/v1/iszy6pglqu7be';
+        const SHEETDB_URL = apiParam || 'https://script.google.com/macros/s/AKfycbzt82an0oeBTjo4TncRopBnd85Yvm5AaUqfQKWCSJwy_ZhN8G5wBvWGoJXBl3h61ZAWSg/exec';
 
         function confirmar() {
             confetti({
