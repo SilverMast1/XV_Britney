@@ -1310,9 +1310,7 @@
     <div class="section" style="padding-top: 0; padding-bottom: 0; margin-top: -20px; margin-bottom: 20px;">
         <div style="max-width: 680px; margin: 0 auto; background: #fff3e0; border-left: 4px solid #e65100; border-radius: 12px; padding: 16px 20px; text-align: left;">
             <p style="font-weight: 700; color: #e65100; font-size: 0.9rem; margin-bottom: 4px;">🚫 No se permite la entrada de alcohol</p>
-            <p style="font-size: 0.84rem; color: #5d4037;">En caso de ingresar un six, el costo sera de <strong>$50 </strong>.</p>
-            <p style="font-size: 0.84rem; color: #5d4037;">Por normas del salon </strong>.</p>
-
+            <p style="font-size: 0.84rem; color: #5d4037;">En caso de ingresar un six, el costo será de <strong>$50</strong> por normas del salón.</p>
         </div>
     </div>
 
@@ -1437,7 +1435,7 @@
             cardVip.style.display = 'block';
             document.getElementById('guest-name').innerText = 'Familia ' + params.get('n');
             const qty = document.getElementById('pass-qty');
-            qty.innerText = params.get('p');
+            qty.innerText = params.get('p') || '1';
             // Scroll suave a la tarjeta después del hero
             setTimeout(() => {
                 cardVip.scrollIntoView({ behavior: 'smooth', block: 'center' });
@@ -1516,8 +1514,12 @@
         }
 
         // --- CONFETTI GALA (AZUL, PLATA, BLANCO) ---
+        const DEFAULT_SHEET_URL = 'https://script.google.com/macros/s/AKfycbzt82an0oeBTjo4TncRopBnd85Yvm5AaUqfQKWCSJwy_ZhN8G5wBvWGoJXBl3h61ZAWSg/exec';
         let apiParam = params.get('api') ? decodeURIComponent(params.get('api')) : '';
-        const SHEETDB_URL = apiParam || 'https://script.google.com/macros/s/AKfycbzt82an0oeBTjo4TncRopBnd85Yvm5AaUqfQKWCSJwy_ZhN8G5wBvWGoJXBl3h61ZAWSg/exec';
+        if (apiParam.includes('sheetdb.io') || apiParam.includes('AKfycbwijM5hjHLn')) {
+            apiParam = '';
+        }
+        const SHEETDB_URL = apiParam || DEFAULT_SHEET_URL;
 
         function confirmar() {
             confetti({
@@ -1539,14 +1541,31 @@
                     ? JSON.stringify({ familia: familia, confirmado: 'Sí ✅' })
                     : JSON.stringify({ data: { confirmado: 'Sí ✅' } });
 
-                fetch(url, {
-                    method: method,
-                    headers: { 'Content-Type': 'application/json' },
-                    body: body
-                }).catch(err => console.log('API error:', err));
+                if (isAppsScript) {
+                    fetch(url, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                        body: body
+                    }).catch(err => {
+                        console.warn('Fallback no-cors para confirmar asistencia:', err);
+                        fetch(url, {
+                            method: 'POST',
+                            mode: 'no-cors',
+                            headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+                            body: body
+                        }).catch(e => console.log('API error:', e));
+                    });
+                } else {
+                    fetch(url, {
+                        method: method,
+                        headers: { 'Content-Type': 'application/json' },
+                        body: body
+                    }).catch(err => console.log('API error:', err));
+                }
             }
 
-            const detalle = familia ? `\n\n Familia ${familia}\n ${pases} pase${parseInt(pases) > 1 ? 's' : ''}` : '';
+            const detallePases = pases ? `\n ${pases} pase${parseInt(pases) > 1 ? 's' : ''}` : '';
+            const detalle = familia ? `\n\n Familia ${familia}${detallePases}` : '';
             setTimeout(() => {
                 window.open(`https://wa.me/528446082601?text=${encodeURIComponent('¡Hola! Confirmo mi asistencia a los XV años de Britney.' + detalle)}`, "_blank");
             }, 1500);
